@@ -1,6 +1,6 @@
 # F2 — Trips
 
-_Status: Draft · Last updated: 2026-11-16 · Source: product.md — Goals, Roles, Assumptions, Key terms, MVP scope, Business rules R8_
+_Status: Draft · Last updated: 2026-11-17 · Source: product.md — Goals, Roles, Assumptions, Key terms, MVP scope, Business rule R8; F1 and project-rules.md_
 
 ## Summary
 An authenticated user can create a trip with a name, view their trips, and delete a trip they own. Each trip is associated with its creating user, and the trip endpoints enforce the ownership and authentication rules defined by F1. Deleting a trip requires confirmation and removes all data contained in that trip.
@@ -19,7 +19,7 @@ An authenticated user can create a trip with a name, view their trips, and delet
 1. An authenticated user opens the trip list. Only trips they own are shown, newest first.
 2. The user chooses to create a trip and enters a name. The name is trimmed and must contain 1–100 characters.
 3. On success, the trip is created for the authenticated user and the app opens its trip detail page, where the user can add people (F3).
-4. From the trip list, the user chooses to delete a trip. A confirmation dialog identifies the trip and offers confirm and cancel actions.
+4. From the trip list, the user chooses to delete a trip. A confirmation dialog identifies the trip and says, “Delete ‘{trip name}’ and all its people, expenses, and payments? This cannot be undone.” It offers confirm and cancel actions.
 5. Cancel closes the dialog and leaves the trip and its contents unchanged. Confirm deletes the trip and all data belonging to it, then returns the user to the trip list.
 
 No screen mockups or application routes exist yet; exact navigation and endpoint names are to be established with the chosen stack.
@@ -29,7 +29,7 @@ No screen mockups or application routes exist yet; exact navigation and endpoint
 - **F2.R2** A trip name is required. Trim surrounding whitespace, then accept names from 1 through 100 characters. Do not impose uniqueness across a user’s trips; duplicate names are allowed.
 - **F2.R3** On successful creation, persist a trip identifier, name, owner, and creation time, then open the new trip’s detail page.
 - **F2.R4** The trip list contains only trips owned by the authenticated user and is ordered by creation time, newest first. An empty list is a valid state.
-- **F2.R5** Deleting a trip requires an explicit confirmation that identifies the trip. Canceling confirmation makes no changes.
+- **F2.R5** Deleting a trip requires an explicit confirmation that identifies the trip and warns that all its people, expenses, and payments will be deleted and the action cannot be undone. Show “Delete ‘{trip name}’ and all its people, expenses, and payments? This cannot be undone.” Canceling or dismissing confirmation makes no changes.
 - **F2.R6** After confirmation, delete the trip and all people, expenses, and payments contained in it. Perform the multi-record deletion atomically, consistent with project-rules.md.
 - **F2.R7** All create, list, and delete operations follow F1 authentication and ownership requirements. A user must not be able to read or delete another user’s trip by changing an identifier or making a direct API request.
 
@@ -44,7 +44,7 @@ No screen mockups or application routes exist yet; exact navigation and endpoint
 - **Empty list:** explain that the user has no trips yet and provide an action to create one.
 - **Create validation failure:** show “Enter a trip name” for a blank name and “Trip names must be 100 characters or fewer” for an overlong name; do not create a trip.
 - **Create failure:** keep the entered name available for correction or retry and report the failure without presenting a success state.
-- **Delete confirmation:** identify the selected trip and provide clearly labeled confirm and cancel actions.
+- **Delete confirmation:** identify the selected trip and show “Delete ‘{trip name}’ and all its people, expenses, and payments? This cannot be undone.” Provide clearly labeled confirm and cancel actions.
 - **Delete failure:** keep the trip visible and report that it was not deleted.
 - **Unauthenticated or not-owned trip request:** follow the unauthorized/not-found behavior specified by F1; do not return or change another user’s trip data.
 
@@ -67,7 +67,7 @@ No screen mockups or application routes exist yet; exact navigation and endpoint
 - **F2.AC2** Given a trip name is blank after trimming or exceeds 100 characters after trimming, when creation is submitted, then validation fails and no trip is created.
 - **F2.AC3** Given a user already has a trip with a particular name, when they create another trip with the same name, then creation succeeds and the trips have distinct identifiers.
 - **F2.AC4** Given a user owns trips and another user owns different trips, when the first user opens the trip list, then only the first user’s trips are returned, newest first; if they own none, the list is empty.
-- **F2.AC5** Given a user starts deleting an owned trip, when they cancel or dismiss the confirmation, then the trip and all its contents remain unchanged.
+- **F2.AC5** Given a user starts deleting an owned trip, when they see the confirmation identifying the trip and warning that its people, expenses, and payments will be deleted and the action cannot be undone, then the user can confirm or cancel; when they cancel or dismiss the confirmation, the trip and all its contents remain unchanged.
 - **F2.AC6** Given a user confirms deletion of an owned trip, when deletion succeeds, then the trip and all its contained people, expenses, and payments are deleted atomically and the user returns to the trip list.
 - **F2.AC7** Given a user is unauthenticated or does not own the requested trip, when they call a trip endpoint directly, then the request is rejected according to F1 and no unauthorized trip data is returned or changed.
 
@@ -86,8 +86,8 @@ Every test must include the full acceptance-criterion ID in its name or a commen
 - **F2.AC7:** Unit-test authorization decisions and verify that denied requests return no trip data and perform no writes; code review ownership predicates on every trip endpoint as required by project-rules.md.
 
 ## Open questions
-- [ ] What API endpoints, persistence schema, and exact error response shapes fit the application stack selected in `CLAUDE.md`?
-- [ ] What implementation-specific timestamp representation and cascade mechanism will be used? Resolve these in the data model and implementation plan after the stack is selected.
+None.
 
 ## Decisions log
 - 2026-11-16: Clarification response indicated the user was unavailable and requested pragmatic defaults → selected trimmed names of 1–100 characters, allowed duplicate names, newest-first ordering, and navigation to the new trip detail page after creation. Product Rule R8 supplies the requirement for confirmation before deletion; a standard confirmation dialog with confirm/cancel actions was used as the UI default.
+- 2026-11-17: Clarification response indicated the user was unavailable and requested pragmatic defaults → selected confirmation copy that names the trip, lists the data deleted, and warns that deletion cannot be undone. API routes, persistence fields, timestamp representation (UTC), and cascade implementation remain stack/data-model details; multi-record deletion must be atomic and cascades are subject to code review under project-rules.md.

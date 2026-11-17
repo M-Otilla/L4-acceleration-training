@@ -95,8 +95,9 @@ Every test must include the full acceptance-criterion ID in its name or a commen
 - **F5.AC8:** Unit-test authorization decisions and verify denied requests return no balance data and perform no writes; code review ownership predicates as required by project-rules.md.
 
 ## Open questions
-- [ ] What API endpoint path, response shape, and error status/body conventions fit the selected app stack?
+None.
 
 ## Decisions log
 - 2026-11-17: User chose “Settled up” with 0.00 for zero balances, a full paid/share/payment breakdown, trip-addition order for the list, and immediate recalculation when trip records change.
 - 2026-11-17: User explicitly approved this specification.
+- 2026-11-17: Balance endpoint paths, response shapes, and error conventions are deferred to the stack-specific API contract in `docs/specs/api.md`; no product behavior or acceptance criteria changed.

@@ -1,6 +1,6 @@
 # F6 — Settle up
 
-_Status: Approved · Last updated: 2026-11-17 · Source: product.md — Overview, Goals, Roles, Assumptions, Key terms, MVP scope, Business Rules R4–R7, Worked examples; F1–F5 specs; CLAUDE.md and project-rules.md_
+_Status: Draft · Last updated: 2026-11-17 · Source: product.md — Overview, Goals, Roles, Assumptions, Key terms, MVP scope, Business Rules R4–R7, Worked examples; F1–F5 specs; CLAUDE.md and project-rules.md_
 
 ## Summary
 Show the payments that would settle an owned trip’s current balances, and let the owner mark a suggested payment as paid after making the money transfer outside the app. Each marked suggestion becomes a recorded payment that changes balances and causes suggestions to be recalculated. The owner can delete a recorded payment after confirmation; this changes the app’s records and balances but does not reverse money moved outside the app.
@@ -20,7 +20,7 @@ Show the payments that would settle an owned trip’s current balances, and let 
 2. The app shows outstanding suggestions in the order produced by the settlement algorithm, each as a payer, recipient, and amount. Recorded payments appear separately, newest first.
 3. After the owner has made a suggested transfer outside the app, they choose its “Mark as paid” action. This action itself is the owner’s confirmation; no second dialog is shown.
 4. The app records the payment, updates balances, and recalculates outstanding suggestions from those new balances. It also shows the payment in the recorded-payments section.
-5. To delete a recorded payment, the owner chooses delete. A confirmation dialog identifies the payer, recipient, and amount and warns that deleting the record changes balances. Cancel leaves it unchanged; confirmation deletes the record and recalculates balances and suggestions.
+5. To delete a recorded payment, the owner chooses delete. A confirmation dialog says, “Delete payment: {payer} paid {recipient} {amount}? Balances will change; this will not reverse the external transfer.” Cancel leaves it unchanged; confirmation deletes the record and recalculates balances and suggestions.
 6. When all balances are zero, show no outstanding suggestions and indicate that the trip is settled.
 
 No screen mockups or application routes exist yet; exact navigation and endpoint names are to be established with the chosen stack.
@@ -32,7 +32,7 @@ No screen mockups or application routes exist yet; exact navigation and endpoint
 - **F6.R4** A suggested payment is not included in F5 balances until the owner marks it as paid. The “Mark as paid” action is one explicit action and does not require a second confirmation dialog.
 - **F6.R5** When a current suggestion is marked as paid, record exactly one payment with the suggested payer, recipient, and amount in integer cents. Recalculate balances and derive a fresh set of suggestions from the updated records; do not retain stale suggestions as current.
 - **F6.R6** Show outstanding suggestions separately from recorded payments. Show each recorded payment’s payer, recipient, and amount, newest recorded first.
-- **F6.R7** Deleting a recorded payment requires explicit confirmation. The dialog identifies the payer, recipient, and amount and warns that deletion changes balances. Canceling or dismissing confirmation makes no changes.
+- **F6.R7** Deleting a recorded payment requires explicit confirmation. Show “Delete payment: {payer} paid {recipient} {amount}? Balances will change; this will not reverse the external transfer.” Canceling or dismissing confirmation makes no changes.
 - **F6.R8** On confirmation, delete the payment record and recalculate balances and suggestions. This removes the payment’s effect from the app’s ledger but does not reverse the external transfer.
 - **F6.R9** Payment amounts are positive whole cents. Each payment is between two different people in the same trip, and the payer and recipient are the people in the current suggestion being marked paid.
 - **F6.R10** After all current suggestions have been marked paid, every person’s balance must be exactly zero, as required by the F6 done condition and product.md Business Rule R5.
@@ -51,7 +51,7 @@ No screen mockups or application routes exist yet; exact navigation and endpoint
 - **All settled:** when all balances are zero, show no suggestions and indicate that the trip is settled.
 - **Recorded payments:** show payer, recipient, and amount separately from outstanding suggestions, newest first.
 - **Mark as paid:** after success, move the payment to recorded payments and refresh balances and suggestions. If the request fails or the suggestion is no longer current, do not show it as paid; refresh from current trip data and report the failure.
-- **Delete confirmation:** identify the payment and warn that deletion changes balances; provide explicit confirm and cancel actions.
+- **Delete confirmation:** show “Delete payment: {payer} paid {recipient} {amount}? Balances will change; this will not reverse the external transfer.” Provide explicit confirm and cancel actions.
 - **Canceled deletion:** close the dialog and leave the payment unchanged.
 - **Delete failure:** keep the payment visible and report that it was not deleted.
 - **Unauthenticated or not-owned trip request:** follow the unauthorized/not-found behavior specified by F1; do not return or change another user’s trip data.
@@ -79,7 +79,7 @@ No screen mockups or application routes exist yet; exact navigation and endpoint
 - **F6.AC4** Given a current suggestion exists, when the owner marks it as paid after making the external transfer, then exactly one payment is recorded and balances and outstanding suggestions are recalculated without a second confirmation dialog.
 - **F6.AC5** Given product.md Worked example 1 and suggested “Jo pays Sam 40.00,” when the owner marks it as paid, then the only remaining suggestion is “Alex pays Sam 10.00,” as in Worked example 3.
 - **F6.AC6** Given outstanding suggestions and recorded payments exist, when the settle-up view is shown, then they appear in separate sections and recorded payments are ordered newest first.
-- **F6.AC7** Given the owner starts deleting a recorded payment, when they cancel or dismiss confirmation, then the payment and balances remain unchanged; when they confirm, then the record is deleted and balances and suggestions reflect its removal.
+- **F6.AC7** Given the owner starts deleting a recorded payment, when the confirmation appears, then it identifies the payer, recipient, and amount, warns that balances will change, and states that the external transfer will not be reversed; when the owner cancels or dismisses confirmation, the payment and balances remain unchanged, and when they confirm, the record is deleted and balances and suggestions reflect its removal.
 - **F6.AC8** Given all current suggestions have been marked paid, when balances are recalculated, then every person’s balance is exactly zero.
 - **F6.AC9** Given a request to read, mark, or delete payments is unauthenticated or targets a trip not owned by the requester, when processed, then it is rejected according to F1 and no unauthorized trip or payment data is returned or changed.
 
@@ -102,9 +102,9 @@ Every test must include the full acceptance-criterion ID in its name or a commen
 - **F6.AC9:** Unit-test authorization decisions and verify denied requests return no payment data and perform no writes; code review ownership predicates on every payment endpoint as required by project-rules.md.
 
 ## Open questions
-- [ ] What API endpoint paths, request/response shapes, and error status/body conventions fit the selected app stack?
-- [ ] What maximum MySQL integer-cent amount and payment timestamp field representation will the data model support?
+None.
 
 ## Decisions log
 - 2026-11-17: User chose trip-addition order to resolve tied debtors/creditors, a single explicit “Mark as paid” action with no second dialog, confirmation before deleting a recorded payment, separate sections for outstanding suggestions and recorded payments, newest-first order for recorded payments, and a deletion warning that identifies payer, recipient, amount, and balance impact.
 - 2026-11-17: User explicitly approved this specification.
+- 2026-11-17: Reopened the approved spec to resolve its remaining payment-deletion confirmation-copy question; the spec returns to Draft because the confirmed wording changes its substance. The user was unavailable, so selected “Delete payment: {payer} paid {recipient} {amount}? Balances will change; this will not reverse the external transfer.” API paths, response/error shapes, physical MySQL amount bounds, and timestamp representation are implementation/data-model details; timestamps remain UTC and no product-level amount cap is introduced.

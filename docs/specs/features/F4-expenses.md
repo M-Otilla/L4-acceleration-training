@@ -1,6 +1,6 @@
 # F4 — Expenses
 
-_Status: Approved · Last updated: 2026-11-17 · Source: product.md — Overview, Goals, Roles, Assumptions, Key terms, MVP scope, Business Rules R1–R3 and R7, Worked examples; F1–F3 specs; CLAUDE.md and project-rules.md_
+_Status: Draft · Last updated: 2026-11-17 · Source: product.md — Overview, Goals, Roles, Assumptions, Key terms, MVP scope, Business Rules R1–R3 and R7, Worked examples; F1–F3 specs; CLAUDE.md and project-rules.md_
 
 ## Summary
 An authenticated trip owner can add, list, and delete expenses in their trip. Each expense records a description, an amount in whole cents, one payer, and at least one participant; everyone on the trip is selected by default. Expenses are split equally, with leftover cents allocated in the order participants were added to the trip.
@@ -20,7 +20,7 @@ An authenticated trip owner can add, list, and delete expenses in their trip. Ea
 2. The owner chooses to add an expense and enters a description and amount, selects one payer, and reviews the participant selection. All people on the trip are selected initially; the owner may deselect people but must leave at least one selected.
 3. On submission, the server verifies the trip, payer, and participants belong to the same owned trip, converts the positive amount to whole cents using the selected rounding rule, and records the expense.
 4. The expense list refreshes with the new expense at the top. Each entry shows its description, total amount, payer, and participants.
-5. To delete an expense, the owner chooses delete and confirms in a dialog identifying the expense and warning that deletion cannot be undone. Cancel leaves it unchanged; confirmation removes it and returns the owner to the expense list.
+5. To delete an expense, the owner chooses delete and confirms in a dialog that says, “Delete ‘{description}’ ({amount})? This cannot be undone.” Cancel leaves it unchanged; confirmation removes it and returns the owner to the expense list.
 
 If a trip has no people, the owner cannot create an expense until people are added (F3). No screen mockups or application routes exist yet; exact navigation and endpoint names are to be established with the chosen stack.
 
@@ -32,7 +32,7 @@ If a trip has no people, the owner cannot create an expense until people are add
 - **F4.R5** When adding an expense, select every person on the trip as a participant by default. The owner may change the selection, but submission is unavailable while no participants are selected. Participant ordering for split allocation follows F3’s stable trip-addition order, not the order in which checkboxes were selected.
 - **F4.R6** Split the total amount equally among the selected participants: each starts with the amount divided by the participant count and rounded down to a cent. Give leftover cents one at a time to participants in their order of addition to the trip, as required by product.md Business Rule R3.
 - **F4.R7** List only expenses in the authenticated owner’s trip, newest-added first. Each list item includes its description, total amount, payer, and participants.
-- **F4.R8** Deleting an expense requires explicit confirmation that identifies the expense and warns that deletion cannot be undone. Canceling or dismissing confirmation makes no changes. On confirmation, delete the expense and its participant associations atomically, consistent with project-rules.md.
+- **F4.R8** Deleting an expense requires explicit confirmation that identifies the expense and warns that deletion cannot be undone. Show “Delete ‘{description}’ ({amount})? This cannot be undone.” Canceling or dismissing confirmation makes no changes. On confirmation, delete the expense and its participant associations atomically, consistent with project-rules.md.
 - **F4.R9** Expense records are not editable. Deleting an expense removes that expense’s contribution to the balances; separately recorded payments remain, and F5/F6 calculations use the remaining expenses and payments according to product.md Business Rule R4.
 
 ## Data & contract
@@ -50,7 +50,7 @@ If a trip has no people, the owner cannot create an expense until people are add
 - **Invalid or rounded-to-zero amount:** show “Enter an amount that rounds to at least 0.01.” Do not create an expense.
 - **No participants selected:** disable submission and explain that at least one participant is required.
 - **Create failure:** keep entered values available for correction or retry and do not present a success state.
-- **Delete confirmation:** identify the selected expense and warn that deletion cannot be undone; provide explicit confirm and cancel actions. Exact dialog wording remains open.
+- **Delete confirmation:** show “Delete ‘{description}’ ({amount})? This cannot be undone.” Provide explicit confirm and cancel actions.
 - **Canceled deletion:** close the dialog and leave the expense unchanged.
 - **Delete failure:** keep the expense visible and report that it was not deleted.
 - **Unauthenticated or not-owned trip request:** follow the unauthorized/not-found behavior specified by F1; do not return or change another user’s trip data.
@@ -99,10 +99,9 @@ Every test must include the full acceptance-criterion ID in its name or a commen
 - **F4.AC8:** Unit-test authorization decisions and verify denied requests return no expense data and perform no writes; code review ownership predicates on every expense endpoint as required by project-rules.md.
 
 ## Open questions
-- [ ] What API endpoint paths, request/response shapes, and error status/body conventions fit the selected app stack?
-- [ ] What maximum MySQL storage range and input decimal precision will be used while honoring the absence of a product-level amount or description limit?
-- [ ] What exact wording should the expense deletion confirmation use?
+None.
 
 ## Decisions log
 - 2026-11-17: User chose to trim and require a non-empty description without setting a product-level maximum; round additional fractional digits to the nearest cent with ties rounded up; set no product-level amount cap; require confirmation before deleting; list newest-added expenses first; use descriptive validation messages; identify the expense and warn that deletion cannot be undone; and disable submission with an explanation when no participants are selected.
 - 2026-11-17: User explicitly approved this specification.
+- 2026-11-17: Reopened the approved spec to resolve its remaining confirmation-copy question; the spec returns to Draft because the confirmed wording changes its substance. The user was unavailable, so selected “Delete ‘{description}’ ({amount})? This cannot be undone.” to identify the expense clearly and warn about the destructive action. API routes, error shapes, physical MySQL storage limits, and accepted decimal precision remain implementation/data-model details; no product-level description or amount maximum is introduced.
